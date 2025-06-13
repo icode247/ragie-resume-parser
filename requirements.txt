@@ -1,0 +1,3 @@
+ragie
+streamlit
+python-dotenv
