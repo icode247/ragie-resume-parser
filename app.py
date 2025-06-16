@@ -19,7 +19,7 @@ def main():
     if 'parser' not in st.session_state:
         st.session_state.parser = ResumeParser()
     
-    # Sidebar for configuration
+    # Sidebar for configuration and upload
     with st.sidebar:
         st.header("Configuration")
         
@@ -38,11 +38,10 @@ def main():
                     st.write("Available Instructions:")
                     for instruction in instructions:
                         st.write(f"- {instruction.name}")
-    
-    # Main content area
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
+        
+        st.divider()
+        
+        # Upload section moved to sidebar
         st.header("Upload Resumes")
         
         uploaded_files = st.file_uploader(
@@ -52,7 +51,7 @@ def main():
             help="Upload PDF, DOCX, or TXT resume files"
         )
         
-        if uploaded_files and st.button("Parse Resumes", type="primary"):
+        if uploaded_files and st.button("Parse Resumes", type="primary", use_container_width=True):
             with st.spinner("Processing resumes..."):
                 results = []
                 progress_bar = st.progress(0)
@@ -85,123 +84,125 @@ def main():
                 st.session_state.parsing_results = results
                 st.success(f"Successfully processed {len(results)} resume(s)")
     
-    with col2:
+    # Main content area - centered results
+    if 'parsing_results' in st.session_state and st.session_state.parsing_results:
         st.header("Parsing Results")
         
-        if 'parsing_results' in st.session_state and st.session_state.parsing_results:
-            for i, result in enumerate(st.session_state.parsing_results):
-                with st.expander(f"📄 {result['file_name']}", expanded=i==0):
-                    data = result['extracted_data']
-                    
-                    # Personal Information
-                    st.subheader("Personal Information")
-                    col_a, col_b = st.columns(2)
-                    
-                    with col_a:
-                        first_name = data.get('firstName', 'N/A')
-                        last_name = data.get('lastName', 'N/A')
-                        full_name = f"{first_name} {last_name}".strip()
-                        st.write(f"**Name:** {full_name}")
-                        st.write(f"**Email:** {data.get('email', 'N/A')}")
-                    
-                    with col_b:
-                        st.write(f"**Phone:** {data.get('phone', 'N/A')}")
-                        st.write(f"**Location:** {data.get('location', 'N/A')}")
-                    
-                    # Summary
-                    if data.get('summary'):
-                        st.subheader("Summary")
-                        st.write(data['summary'])
-                    
-                    # Skills
-                    if data.get('skills') and len(data['skills']) > 0:
-                        st.subheader("Skills")
-                        skills_text = ", ".join(data['skills'])
-                        st.write(skills_text)
-                    
-                    # Experience
-                    if data.get('experience') and len(data['experience']) > 0:
-                        st.subheader("Experience")
-                        for exp in data['experience']:
-                            st.write(f"**{exp.get('position', 'N/A')}** at {exp.get('company', 'N/A')}")
-                            if exp.get('duration'):
-                                st.write(f"Duration: {exp['duration']}")
-                            if exp.get('description'):
-                                st.write(f"Description: {exp['description']}")
-                            st.write("---")
-                    
-                    # Education
-                    if data.get('education') and len(data['education']) > 0:
-                        st.subheader("Education")
-                        for edu in data['education']:
-                            degree = edu.get('degree', 'N/A')
-                            institution = edu.get('institution', 'N/A')
-                            st.write(f"**{degree}** from {institution}")
-                            if edu.get('graduationYear'):
-                                st.write(f"Graduated: {edu['graduationYear']}")
-                            st.write("---")
-                    
-                    # Certifications
-                    if data.get('certifications') and len(data['certifications']) > 0:
-                        st.subheader("Certifications")
-                        for cert in data['certifications']:
-                            st.write(f"• {cert}")
-                    
-                    # Raw JSON data
-                    if st.checkbox("Show Raw JSON Data", key=f"json_{result['file_name']}"):
-                        st.json(data)
-            
-            # Export functionality
-            st.subheader("Export Results")
-            col_export1, col_export2 = st.columns(2)
-            
-            with col_export1:
-                if st.button("Export as JSON"):
-                    json_data = json.dumps(st.session_state.parsing_results, indent=2)
-                    st.download_button(
-                        label="Download JSON",
-                        data=json_data,
-                        file_name="resume_parsing_results.json",
-                        mime="application/json"
-                    )
-            
-            with col_export2:
-                if st.button("Export as CSV"):
-                    # Flatten data for CSV export
-                    flattened_data = []
-                    for result in st.session_state.parsing_results:
-                        data = result['extracted_data']
-                        row = {
-                            'file_name': result['file_name'],
-                            'first_name': data.get('firstName', ''),
-                            'last_name': data.get('lastName', ''),
-                            'email': data.get('email', ''),
-                            'phone': data.get('phone', ''),
-                            'location': data.get('location', ''),
-                            'summary': data.get('summary', ''),
-                            'skills': ', '.join(data.get('skills', [])),
-                            'certifications': ', '.join(data.get('certifications', []))
-                        }
-                        flattened_data.append(row)
-                    
-                    df = pd.DataFrame(flattened_data)
-                    csv_data = df.to_csv(index=False)
-                    st.download_button(
-                        label="Download CSV",
-                        data=csv_data,
-                        file_name="resume_parsing_results.csv",
-                        mime="text/csv"
-                    )
+        for i, result in enumerate(st.session_state.parsing_results):
+            with st.expander(f"📄 {result['file_name']}", expanded=i==0):
+                data = result['extracted_data']
+                
+                # Personal Information
+                st.subheader("Personal Information")
+                col_a, col_b = st.columns(2)
+                
+                with col_a:
+                    first_name = data.get('firstName', 'N/A')
+                    last_name = data.get('lastName', 'N/A')
+                    full_name = f"{first_name} {last_name}".strip()
+                    st.write(f"**Name:** {full_name}")
+                    st.write(f"**Email:** {data.get('email', 'N/A')}")
+                
+                with col_b:
+                    st.write(f"**Phone:** {data.get('phone', 'N/A')}")
+                    st.write(f"**Location:** {data.get('location', 'N/A')}")
+                
+                # Summary
+                if data.get('summary'):
+                    st.subheader("Summary")
+                    st.write(data['summary'])
+                
+                # Skills
+                if data.get('skills') and len(data['skills']) > 0:
+                    st.subheader("Skills")
+                    skills_text = ", ".join(data['skills'])
+                    st.write(skills_text)
+                
+                # Experience
+                if data.get('experience') and len(data['experience']) > 0:
+                    st.subheader("Experience")
+                    for exp in data['experience']:
+                        st.write(f"**{exp.get('position', 'N/A')}** at {exp.get('company', 'N/A')}")
+                        if exp.get('duration'):
+                            st.write(f"Duration: {exp['duration']}")
+                        if exp.get('description'):
+                            st.write(f"Description: {exp['description']}")
+                        st.write("---")
+                
+                # Education
+                if data.get('education') and len(data['education']) > 0:
+                    st.subheader("Education")
+                    for edu in data['education']:
+                        degree = edu.get('degree', 'N/A')
+                        institution = edu.get('institution', 'N/A')
+                        st.write(f"**{degree}** from {institution}")
+                        if edu.get('graduationYear'):
+                            st.write(f"Graduated: {edu['graduationYear']}")
+                        st.write("---")
+                
+                # Certifications
+                if data.get('certifications') and len(data['certifications']) > 0:
+                    st.subheader("Certifications")
+                    for cert in data['certifications']:
+                        st.write(f"• {cert}")
+                
+                # Raw JSON data
+                if st.checkbox("Show Raw JSON Data", key=f"json_{result['file_name']}"):
+                    st.json(data)
         
-        else:
-            st.info("Upload and parse resumes to see results here.")
-            st.markdown("""
-            **How to get started:**
-            1. Click 'Create Extraction Schema' in the sidebar
-            2. Upload one or more resume files
-            3. Click 'Parse Resumes' to extract structured data
-            4. View and export the results
-            """)
+        # Export functionality
+        st.subheader("Export Results")
+        col_export1, col_export2 = st.columns(2)
+        
+        with col_export1:
+            if st.button("Export as JSON"):
+                json_data = json.dumps(st.session_state.parsing_results, indent=2)
+                st.download_button(
+                    label="Download JSON",
+                    data=json_data,
+                    file_name="resume_parsing_results.json",
+                    mime="application/json"
+                )
+        
+        with col_export2:
+            if st.button("Export as CSV"):
+                # Flatten data for CSV export
+                flattened_data = []
+                for result in st.session_state.parsing_results:
+                    data = result['extracted_data']
+                    row = {
+                        'file_name': result['file_name'],
+                        'first_name': data.get('firstName', ''),
+                        'last_name': data.get('lastName', ''),
+                        'email': data.get('email', ''),
+                        'phone': data.get('phone', ''),
+                        'location': data.get('location', ''),
+                        'summary': data.get('summary', ''),
+                        'skills': ', '.join(data.get('skills', [])),
+                        'certifications': ', '.join(data.get('certifications', []))
+                    }
+                    flattened_data.append(row)
+                
+                df = pd.DataFrame(flattened_data)
+                csv_data = df.to_csv(index=False)
+                st.download_button(
+                    label="Download CSV",
+                    data=csv_data,
+                    file_name="resume_parsing_results.csv",
+                    mime="text/csv"
+                )
+    
+    else:
+                st.info("Upload and parse resumes to see results here.")
+                st.markdown("""
+                **How to get started:**
+                1. Click 'Create Extraction Schema' in the sidebar
+                2. Upload one or more resume files
+                3. Click 'Parse Resumes' to extract structured data
+                4. View and export the results
+                """)
 
 if __name__ == "__main__":
     main()
+
+

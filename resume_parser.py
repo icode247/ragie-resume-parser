@@ -85,7 +85,9 @@ class ResumeParser:
             response = self.client.entities.create_instruction(request={
                 "name": f"Resume Parser {int(time.time())}",
                 "prompt": "Extract structured information from resume documents including personal details, skills, experience, education, and certifications. If any field is not found, set it to null or empty array as appropriate.",
-                "entity_schema": entity_schema
+                "entity_schema": entity_schema,
+                "active": True,
+                "scope": "document"
             })
             self.instruction_id = response.id
             print(f"Instruction created successfully with ID: {self.instruction_id}")
@@ -119,7 +121,7 @@ class ResumeParser:
             
             # Get extracted entities using the entities API
             extraction_response = self.client.entities.list_by_document(request={
-                "document_id": "15895021-4a85-439e-a65b-97e884f785c6"
+                "document_id":  document_id,
             })
 
             print("extraction_response", extraction_response)
